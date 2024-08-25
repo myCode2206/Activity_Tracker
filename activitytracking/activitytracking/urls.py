@@ -27,5 +27,8 @@ urlpatterns = [
     path('activity/',Activity,name="Activity"),
     path('login/',login,name="Login"),
     path('signup/',signup,name="signup"),
+    path("start_tracking/",start_tracking,name="start_tracking"),
+    path("stop_tracking/",stop_tracking,name="stop_tracking"),
+    path("get_applications/",get_applications,name="get_applications"),
     path('admin/', admin.site.urls),
 ]
