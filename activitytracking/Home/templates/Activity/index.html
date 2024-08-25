@@ -8,17 +8,55 @@
       more personalized and secure experience for you. Your data is always
       handled with the highest standards of privacy and security.
     </p>
-    <button class="btn btn-primary">Start</button>
+    <button class="btn btn-primary" id="startButton">Start</button>
+    <button class="btn btn-danger" id="stopButton">Stop</button>
+    <button class="btn btn-success" id="refreshButton">Get Data</button>
   </div>
   <div class="mt-5">
     <h2>User Activity</h2>
-    <div>
-      <div class="bg-info mb-1">Hello</div>
-      <div class="bg-info mb-1">Hello</div>
-      <div class="bg-info mb-1">Hello</div>
-      <div class="bg-info mb-1">Hello</div>
+    <div id="applications">
+      <ul id="appList"></ul>
     </div>
   </div>
 </div>
+<script>
+  document.getElementById('startButton').addEventListener('click', () => {
+    fetch('/start_tracking/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(data => alert('Tracking started'))
+      .catch(error => console.error('Error:', error));
+  });
 
+  document.getElementById('stopButton').addEventListener('click', () => {
+    fetch('/stop_tracking/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(data => alert('Tracking stopped'))
+      .catch(error => console.error('Error:', error));
+  });
+
+  document.getElementById('refreshButton').addEventListener('click', () => {
+    fetch('/get_applications/')
+      .then(response => response.json())
+      .then(data => {
+        const appList = document.getElementById('appList');
+        appList.innerHTML = '';
+        data.applications.forEach(app => {
+          const li = document.createElement('li');
+          li.textContent = app;
+          appList.appendChild(li);
+        });
+      })
+      .catch(error => console.error('Error:', error));
+  });
+</script>
 {%endblock%}
