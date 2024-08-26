@@ -19,16 +19,17 @@ from django.urls import path
 from Home.views import *
 
 urlpatterns = [
-    path('',Home,name="Home"),
+    path('',Front,name="Front"),
     path('auth/',Auth,name="Auth"),
     path('register/',Signup,name="Signup"),
     path('dashboard/',Dashboard,name="Dashboard"),
-    path('front/',Front,name="Front"),
     path('activity/',Activity,name="Activity"),
     path('login/',login,name="Login"),
     path('signup/',signup,name="signup"),
     path("start_tracking/",start_tracking,name="start_tracking"),
     path("stop_tracking/",stop_tracking,name="stop_tracking"),
     path("get_applications/",get_applications,name="get_applications"),
+    path("show_imgpage/",show_imgpage,name="show_imgpage"),
+    path("get_my_images/",get_my_images,name="get_my_images"),
     path('admin/', admin.site.urls),
 ]

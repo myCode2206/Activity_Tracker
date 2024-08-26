@@ -1,0 +1,78 @@
+{% extends "Home/index.html" %}
+{% block start %}
+
+<h1>User Screenshots</h1>
+<button id="load-screenshots-btn">Load Screenshots</button>
+<div id="screenshots-container"></div>
+
+<script>
+    // Function to get the CSRF token from the cookies
+    function getCSRFToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function loadScreenshots(userId) {
+        try {
+            const csrfToken = getCSRFToken();  // Get the CSRF token
+
+            const response = await fetch('/get_my_images/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken  // Include the CSRF token in the headers
+                },
+                body: JSON.stringify({ id: userId })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            return data;  // Return the screenshots data
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function displayScreenshots(userId) {
+        const screenshots = await loadScreenshots(userId);
+
+        if (screenshots && Array.isArray(screenshots.screenshots)) {
+            const container = document.getElementById('screenshots-container');
+            container.innerHTML = '';  // Clear previous images
+
+            screenshots.screenshots.forEach(screenshot => {
+                const img = document.createElement('img');
+                img.src = `data:image/png;base64,${screenshot.data}`;
+                img.alt = screenshot.filename;
+                container.appendChild(img);
+            });
+        } else {
+            console.error('No screenshots found or invalid data');
+        }
+    }
+
+    document.getElementById('load-screenshots-btn').addEventListener('click', () => {
+        const userId = localStorage.getItem('user_id');  // Get userId from localStorage
+        if (userId) {
+            displayScreenshots(userId);
+        } else {
+            console.error('User ID not found');
+        }
+    });
+</script>
+
+{% endblock %}

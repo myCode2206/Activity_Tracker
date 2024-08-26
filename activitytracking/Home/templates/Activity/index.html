@@ -13,19 +13,21 @@
     <button class="btn btn-success" id="refreshButton">Get Data</button>
   </div>
   <div class="mt-5">
-    <h2>User Activity</h2>
     <div id="applications">
+      <h2>User Activity</h2>
       <ul id="appList"></ul>
     </div>
   </div>
 </div>
 <script>
+  const user_id = localStorage.getItem('user_id');
   document.getElementById('startButton').addEventListener('click', () => {
     fetch('/start_tracking/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify({ id: user_id })
     })
       .then(response => response.json())
       .then(data => alert('Tracking started'))
