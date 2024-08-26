@@ -1,21 +1,23 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.tokens import AccessToken
 from .models import person_collection
 from .hashing import hash_password, check_password
-from .creatingToken import create_tokens  # Ensure this function is correctly implemented
+from .creatingToken import create_tokens
 import threading
 import time
 import win32gui
 import win32process
 import psutil
+from .image_utils import *
 
-# Shared state for tracking applications
+# Shared state for tracking
 tracking = False
 tracked_applications = []
+screenshot_thread = None
 
 # HTML views
 def Home(request):
@@ -36,6 +38,8 @@ def Front(request):
 def Activity(request):
     return render(request, "Activity/index.html")
 
+def show_imgpage(request):
+    return render(request, "show_images/index.html")
 # DRF views for authentication
 @api_view(['POST'])
 def signup(request):
@@ -64,11 +68,14 @@ def signup(request):
         'email': email,
     }
     access_token, refresh_token = create_tokens(user)
+    fetched_user_data = person_collection.find_one({'username': username})
+
 
     return Response({
         'username': username,
         'access_token': access_token,
-        'refresh_token': refresh_token
+        'refresh_token': refresh_token,
+        'user_id':str(fetched_user_data['_id'])
     }, status=status.HTTP_201_CREATED)
 
 @api_view(['POST'])
@@ -82,11 +89,13 @@ def login(request):
     user = person_collection.find_one({'username': username})
     if user and check_password(user['password'], password):
         access_token, refresh_token = create_tokens(user)
-        request.session['access_token'] = access_token
+        request.session.access_token = str(access_token)
+        # print(user['_id'])
         return Response({
             'username': username,
             'access_token': access_token,
-            'refresh_token': refresh_token
+            'refresh_token': refresh_token,
+            'user_id':str(user['_id'])
         }, status=status.HTTP_200_OK)
     else:
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -123,31 +132,54 @@ def get_active_process_name():
     except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
         return None
 
-def track_active_applications():
-    global tracking, tracked_applications
+def track_active_applications(user_id):
+    global tracking, tracked_applications, screenshot_thread
     tracked_applications = []
+
+    # Start screenshot capture
+    screenshot_thread = threading.Thread(target=capture_screenshot_interval, args=(user_id, 10))
+    screenshot_thread.start()
+
     while tracking:
         active_window_name = get_active_window_name()
         if active_window_name and (not tracked_applications or active_window_name != tracked_applications[-1]):
             tracked_applications.append(active_window_name)
         time.sleep(3)
 
+    # Ensure screenshot capture stops when tracking stops
+    tracking = False
+
 @api_view(['POST'])
 def start_tracking(request):
     global tracking
     if not tracking:
         tracking = True
-        thread = threading.Thread(target=track_active_applications)
+        user_id = request.data.get('id')  # Assuming the MongoDB _id is stored in the session or user object
+        thread = threading.Thread(target=track_active_applications, args=(user_id,))
         thread.start()
     return Response({'status': 'started'})
 
 @api_view(['POST'])
 def stop_tracking(request):
-    global tracking
+    global tracking, screenshot_thread
     tracking = False
-    #add data to the database
+
+    if screenshot_thread and screenshot_thread.is_alive():
+        screenshot_thread.join()  # Ensure the screenshot thread has stopped
+    
+    # Add data to the database if needed
     return Response({'status': 'stopped'})
 
 @api_view(['GET'])
 def get_applications(request):
     return Response({'applications': tracked_applications})
+
+
+def get_my_images(request):
+    user_id = request.data.get('id')
+    all_screenshots = get_all_screenshots(user_id)
+    
+    if isinstance(all_screenshots, HttpResponse):
+        return all_screenshots  # If an error response was returned, pass it along
+    
+    return JsonResponse({'screenshots': all_screenshots})
