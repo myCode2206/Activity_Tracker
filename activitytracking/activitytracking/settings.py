@@ -154,3 +154,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # or another session engine if needed
 SESSION_COOKIE_AGE = 1209600  # Two weeks, in seconds
 
+
+
+#CSRF
+
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_COOKIE_HTTPONLY = True  # Set to True to make the cookie inaccessible to JavaScript
+CSRF_COOKIE_SECURE = False  # Set to True if using HTTPS
+CSRF_COOKIE_PATH = '/'
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'  # Ensure header name matches what is used in requests

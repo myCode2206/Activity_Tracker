@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.middleware.csrf import get_token
 from django.http import JsonResponse, HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
@@ -13,6 +14,8 @@ import win32gui
 import win32process
 import psutil
 from .image_utils import *
+import json
+from django.views.decorators.csrf import csrf_exempt
 
 # Shared state for tracking
 tracking = False
@@ -21,6 +24,7 @@ screenshot_thread = None
 
 # HTML views
 def Home(request):
+   
     return render(request, "Home/index.html")
 
 def Dashboard(request):
@@ -33,6 +37,8 @@ def Signup(request):
     return render(request, "Auth/signup.html")
 
 def Front(request):
+    print("hiii")
+    print(request.session.get("username"))
     return render(request, "Front/index.html")
 
 def Activity(request):
@@ -70,7 +76,8 @@ def signup(request):
     access_token, refresh_token = create_tokens(user)
     fetched_user_data = person_collection.find_one({'username': username})
 
-
+    request.session.username=username
+    print(request.session.get("username"))
     return Response({
         'username': username,
         'access_token': access_token,
@@ -175,11 +182,31 @@ def get_applications(request):
     return Response({'applications': tracked_applications})
 
 
+@csrf_exempt
 def get_my_images(request):
-    user_id = request.data.get('id')
-    all_screenshots = get_all_screenshots(user_id)
-    
-    if isinstance(all_screenshots, HttpResponse):
-        return all_screenshots  # If an error response was returned, pass it along
-    
-    return JsonResponse({'screenshots': all_screenshots})
+    if request.method == 'POST':
+        try:
+            # Parse JSON data from the request body
+            request_data = json.loads(request.body)
+            user_id = request_data.get('id')
+
+            if not user_id:
+                return JsonResponse({'error': 'User ID not provided'}, status=400)
+
+            all_screenshots = get_all_screenshots(user_id)
+            
+            if isinstance(all_screenshots, HttpResponse):
+                return all_screenshots  # If an error response was returned, pass it along
+
+            return JsonResponse({'screenshots': all_screenshots})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    return HttpResponse('Method Not Allowed', status=405)
+
+
+
+def test_csrf_view(request):
+    token = get_token(request)
+    return JsonResponse({'csrfToken': token})

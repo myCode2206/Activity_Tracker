@@ -25,6 +25,7 @@ urlpatterns = [
     path('dashboard/',Dashboard,name="Dashboard"),
     path('activity/',Activity,name="Activity"),
     path('login/',login,name="Login"),
+    path('logout/',logout,name="logout"),
     path('signup/',signup,name="signup"),
     path("start_tracking/",start_tracking,name="start_tracking"),
     path("stop_tracking/",stop_tracking,name="stop_tracking"),
