@@ -26,11 +26,21 @@
         </p>
         <div class="mt-4">
           <!-- hover background-color: white; color: black; -->
-          <a href="/auth" class="btn px-5 py-3 text-white mt-3 mt-sm-0"
+          <a onclick="fun()" id="get-started-btn" class="btn px-5 py-3 text-white mt-3 mt-sm-0"
             style="border-radius: 30px; background-color: #9b5de5">Get Started</a>
         </div>
       </div>
     </div>
   </div>
 </div>
+<script>
+  const fun = () => {
+    const username = localStorage.getItem('username');
+    if (username) {
+      window.location.href = '/activity';
+    } else {
+      window.location.href = '/auth';
+    }
+  }
+</script>
 {%endblock%}

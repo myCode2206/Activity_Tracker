@@ -7,14 +7,15 @@
 
 <script>
     // Function to get the CSRF token from the cookies
+    // Function to get the CSRF token from the cookies
     function getCSRFToken() {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                if (cookie.substring(0, 10) === 'csrftoken=') {
-                    cookieValue = decodeURIComponent(cookie.substring(10));
+                if (cookie.startsWith('csrftoken=')) {
+                    cookieValue = decodeURIComponent(cookie.substring('csrftoken='.length));
                     break;
                 }
             }
@@ -22,21 +23,26 @@
         return cookieValue;
     }
 
+
     async function loadScreenshots(userId) {
         try {
             const csrfToken = getCSRFToken();  // Get the CSRF token
+
+            if (!csrfToken) {
+                throw new Error('CSRF token not found');
+            }
 
             const response = await fetch('/get_my_images/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken  // Include the CSRF token in the headers
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({ id: userId })
             });
 
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error(`Network response was not ok: ${response.statusText}`);
             }
 
             const data = await response.json();

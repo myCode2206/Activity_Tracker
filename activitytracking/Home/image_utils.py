@@ -48,25 +48,26 @@ def get_all_screenshots(user_id):
     screenshots = user['screenshots']
     images = []
 
-    for screenshot_data in screenshots:
-        # Decode base64 data or directly use binary data
-        image_data = base64.b64decode(screenshot_data)  # Use this if data is base64
-        
-        # If the data is binary, use the following line instead:
-        # image_data = screenshot_data
+    for index, screenshot_data in enumerate(screenshots):
+        try:
+            # Decode base64 data or directly use binary data
+            image_data = base64.b64decode(screenshot_data)  # Use this if data is base64
 
-        # Convert to image
-        image = Image.open(io.BytesIO(image_data))
-        
-        # Save image to a temporary buffer
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-        buffer.seek(0)
+            # Convert to image
+            image = Image.open(io.BytesIO(image_data))
+            
+            # Save image to a temporary buffer
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG")
+            buffer.seek(0)
 
-        # Add image to list
-        images.append({
-            'filename': f'image_{screenshots.index(screenshot_data)}.png',
-            'data': base64.b64encode(buffer.getvalue()).decode('utf-8')  # Encode to base64 for JSON compatibility
-        })
+            # Add image to list
+            images.append({
+                'filename': f'image_{index}.png',
+                'data': base64.b64encode(buffer.getvalue()).decode('utf-8')  # Encode to base64 for JSON compatibility
+            })
+        except Exception as e:
+            # Handle any issues with image processing
+            print(f"Error processing screenshot: {e}")
 
     return images
